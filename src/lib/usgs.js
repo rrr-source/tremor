@@ -28,8 +28,8 @@ function normalize(feature) {
   }
 }
 
-export async function fetchQuakes(filter, period) {
-  const res = await fetch(feedUrl(filter, period))
+export async function fetchQuakes(filter, period, { signal } = {}) {
+  const res = await fetch(feedUrl(filter, period), { signal })
   if (!res.ok) {
     throw new Error(`USGS feed returned ${res.status} ${res.statusText}`)
   }
