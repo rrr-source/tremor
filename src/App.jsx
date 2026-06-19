@@ -5,6 +5,7 @@ import { WorldMap } from './components/WorldMap.jsx'
 import { QuakeDetail } from './components/QuakeDetail.jsx'
 import { QuakeList } from './components/QuakeList.jsx'
 import { Controls } from './components/Controls.jsx'
+import { NearMeButton } from './components/NearMeButton.jsx'
 
 export default function App() {
   const [filter, setFilter] = useState('2.5')
@@ -13,6 +14,7 @@ export default function App() {
   const { quakes, loading, error, lastUpdated } = useQuakes({ filter, period })
   const updatedLabel = useRelativeTime(lastUpdated)
   const [selectedId, setSelectedId] = useState(null)
+  const [nearMe, setNearMe] = useState(null)
 
   // Clear selection when the selected quake leaves the current result set.
   useEffect(() => {
@@ -21,7 +23,19 @@ export default function App() {
     }
   }, [quakes, selectedId])
 
+  // Clear nearMe when that quake leaves the result set.
+  useEffect(() => {
+    if (nearMe !== null && !quakes.some(q => q.id === nearMe.quakeId)) {
+      setNearMe(null)
+    }
+  }, [quakes, nearMe])
+
   const selectedQuake = quakes.find(q => q.id === selectedId) ?? null
+  const nearMeDistanceKm = selectedId === nearMe?.quakeId ? nearMe.distanceKm : null
+
+  function handleNearest(quakeId, distanceKm) {
+    setNearMe({ quakeId, distanceKm })
+  }
 
   let statusText
   if (loading) {
@@ -57,7 +71,12 @@ export default function App() {
             onSelect={setSelectedId}
           />
           <aside className="detail-rail">
-            <QuakeDetail quake={selectedQuake} />
+            <NearMeButton
+              quakes={quakes}
+              onSelect={setSelectedId}
+              onNearest={handleNearest}
+            />
+            <QuakeDetail quake={selectedQuake} distanceKm={nearMeDistanceKm} />
             <QuakeList
               quakes={quakes}
               selectedId={selectedId}

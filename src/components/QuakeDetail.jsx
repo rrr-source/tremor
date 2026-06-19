@@ -19,7 +19,7 @@ function pluralPeople(n) {
   return 'человек'
 }
 
-export function QuakeDetail({ quake }) {
+export function QuakeDetail({ quake, distanceKm }) {
   const relTime = useRelativeTime(quake?.time ?? null)
 
   if (!quake) {
@@ -58,6 +58,9 @@ export function QuakeDetail({ quake }) {
         <p className="detail-place">{quake.place}</p>
         <p className="detail-time mono">{absTime} · {relTime}</p>
         <p className="detail-depth mono">Глубина: {formatDepth(quake.depth)}</p>
+        {distanceKm != null && (
+          <p className="detail-distance mono">в {distanceKm.toLocaleString('ru-RU')} км от вас</p>
+        )}
       </div>
 
       {/* Felt count — omit if null or 0 */}
