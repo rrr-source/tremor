@@ -1,0 +1,42 @@
+:root {
+  /* surfaces */
+  --bg:        #0a0c10;
+  --bg-elev:   #11151c;
+  --bg-line:   #1b2230;
+
+  /* map */
+  --land:      #19202b;
+  --land-edge: #2b3340;
+  --graticule: #141a24;
+
+  /* text */
+  --text:       #e6e9ee;
+  --text-dim:   #8a94a3;
+  --text-faint: #5b6675;
+
+  /* brand / live signal */
+  --accent: #ff5a36;
+
+  /* magnitude scale */
+  --mag-micro:  #4cc9c0;
+  --mag-light:  #f5c451;
+  --mag-mod:    #f59e3c;
+  --mag-strong: #f4743b;
+  --mag-major:  #ef4444;
+  --mag-great:  #ff2d55;
+
+  /* flags */
+  --tsunami:      #38bdf8;
+  --alert-green:  #22c55e;
+  --alert-yellow: #eab308;
+  --alert-orange: #f97316;
+  --alert-red:    #ef4444;
+
+  /* radii */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+
+  /* space unit — multiply: 1×, 2×, 3×… */
+  --space: 8px;
+}
