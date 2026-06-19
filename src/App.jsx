@@ -1,34 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuakes } from './hooks/useQuakes.js'
+import { useRelativeTime } from './hooks/useRelativeTime.js'
 import { WorldMap } from './components/WorldMap.jsx'
-
-function useRelativeTime(timestamp) {
-  const [label, setLabel] = useState('')
-
-  useEffect(() => {
-    if (!timestamp) return
-
-    function update() {
-      const secs = Math.floor((Date.now() - timestamp) / 1000)
-      if (secs < 60) {
-        setLabel(`${secs} сек назад`)
-      } else {
-        setLabel(`${Math.floor(secs / 60)} мин назад`)
-      }
-    }
-
-    update()
-    const id = setInterval(update, 10_000)
-    return () => clearInterval(id)
-  }, [timestamp])
-
-  return label
-}
+import { QuakeDetail } from './components/QuakeDetail.jsx'
 
 export default function App() {
   const { quakes, loading, error, lastUpdated } = useQuakes({ filter: '2.5', period: 'day' })
   const updatedLabel = useRelativeTime(lastUpdated)
   const [selectedId, setSelectedId] = useState(null)
+
+  const selectedQuake = quakes.find(q => q.id === selectedId) ?? null
 
   let statusText
   if (loading) {
@@ -46,11 +27,16 @@ export default function App() {
       </header>
       <main className="app-main">
         <p className="app-status mono">{statusText}</p>
-        <WorldMap
-          quakes={quakes}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
+        <div className="app-body">
+          <WorldMap
+            quakes={quakes}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+          <aside className="detail-rail">
+            <QuakeDetail quake={selectedQuake} />
+          </aside>
+        </div>
       </main>
     </div>
   )
