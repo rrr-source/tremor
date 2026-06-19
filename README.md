@@ -99,11 +99,26 @@ This product uses USGS data but is not endorsed by or affiliated with the USGS.
 
 ## Roadmap
 
-- [ ] v1: live map, detail readout, energy, near-me, biggest-now
-- [ ] Globe mode (orthographic, drag to rotate)
-- [ ] Time scrubber — replay the last 24h
-- [ ] Population overlay to estimate human exposure
-- [ ] Shareable deep-link per event
+**v1 — shipped**
+
+- [x] Live map — USGS feed, 60 s polling, filter by magnitude and time window
+- [x] Event detail — place, depth, local time, felt reports, tsunami flag, PAGER alert
+- [x] Energy readout — joules → TNT, animated bar, Hiroshima reference
+- [x] Nearest to me — one-tap geolocation, haversine distance, coordinates never stored
+- [x] Biggest now — ranked list synced with the map, two-way selection
+- [x] Globe mode — orthographic projection, drag to rotate, back-face culling
+
+**Known / planned**
+
+- Mobile layout needs real-device testing before deploy (responsive CSS exists, untested on hardware)
+- EN / RU language toggle (i18n pass; all strings are already whole phrases, not concatenated fragments)
+- Sticky detail panel via `position: sticky` (currently the whole rail scrolls as one column)
+
+**Later**
+
+- Time scrubber — replay the last 24 h
+- Population overlay to estimate human exposure
+- Shareable deep-link per event
 
 ## License
 
