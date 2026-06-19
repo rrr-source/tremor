@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { geoPath, geoGraticule10 } from 'd3-geo'
 import { makeProjection } from '../lib/geo.js'
+import { magColor, magRadius } from '../lib/magnitude.js'
 import land from '../data/land-110m.geo.json'
 
-export function WorldMap() {
+export function WorldMap({ quakes = [], selectedId = null, onSelect }) {
   const containerRef = useRef(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
 
@@ -18,17 +19,24 @@ export function WorldMap() {
     return () => ro.disconnect()
   }, [])
 
-  const { sphereD, graticuleD, landD } = useMemo(() => {
+  const { sphereD, graticuleD, landD, projection } = useMemo(() => {
     const { width, height } = size
     if (!width || !height) return {}
-    const projection = makeProjection(width, height)
-    const pathGen = geoPath(projection)
+    const proj = makeProjection(width, height)
+    const pathGen = geoPath(proj)
     return {
+      projection: proj,
       sphereD:    pathGen({ type: 'Sphere' }),
       graticuleD: pathGen(geoGraticule10()),
       landD:      pathGen(land),
     }
   }, [size])
+
+  // Ascending mag so larger quakes paint on top.
+  const sortedQuakes = useMemo(
+    () => [...quakes].sort((a, b) => (a.mag ?? 0) - (b.mag ?? 0)),
+    [quakes]
+  )
 
   return (
     <div ref={containerRef} className="world-map">
@@ -42,6 +50,45 @@ export function WorldMap() {
           <path d={sphereD}    fill="var(--bg)"       stroke="var(--bg-line)"   strokeWidth={0.5} />
           <path d={graticuleD} fill="none"            stroke="var(--graticule)" strokeWidth={0.3} />
           <path d={landD}      fill="var(--land)"     stroke="var(--land-edge)" strokeWidth={0.5} />
+
+          <g className="quake-layer">
+            {sortedQuakes.map(q => {
+              const pos = projection([q.lon, q.lat])
+              if (!pos) return null
+              const [x, y] = pos
+              const r = magRadius(q.mag)
+              const color = magColor(q.mag)
+              const isSelected = q.id === selectedId
+
+              return (
+                <g
+                  key={q.id}
+                  transform={`translate(${x},${y})`}
+                  className={`quake-marker${isSelected ? ' quake-selected' : ''}`}
+                  onClick={() => onSelect?.(q.id)}
+                >
+                  <title>{q.title}</title>
+                  {isSelected && (
+                    <circle
+                      r={r + 5}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth={1.5}
+                      strokeOpacity={0.7}
+                    />
+                  )}
+                  <circle
+                    className="quake-dot"
+                    r={r}
+                    fill={color}
+                    fillOpacity={0.75}
+                    stroke={color}
+                    strokeWidth={0.8}
+                  />
+                </g>
+              )
+            })}
+          </g>
         </svg>
       )}
     </div>

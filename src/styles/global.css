@@ -66,3 +66,23 @@ body {
   min-height: 0;
   overflow: hidden;
 }
+
+/* Quake markers */
+.quake-marker {
+  cursor: pointer;
+}
+
+.quake-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .quake-dot {
+    transition: transform 0.1s ease;
+  }
+}
+
+.quake-marker:hover .quake-dot {
+  transform: scale(1.5);
+}

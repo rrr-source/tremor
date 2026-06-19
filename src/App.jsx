@@ -28,6 +28,7 @@ function useRelativeTime(timestamp) {
 export default function App() {
   const { quakes, loading, error, lastUpdated } = useQuakes({ filter: '2.5', period: 'day' })
   const updatedLabel = useRelativeTime(lastUpdated)
+  const [selectedId, setSelectedId] = useState(null)
 
   let statusText
   if (loading) {
@@ -45,7 +46,11 @@ export default function App() {
       </header>
       <main className="app-main">
         <p className="app-status mono">{statusText}</p>
-        <WorldMap />
+        <WorldMap
+          quakes={quakes}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
       </main>
     </div>
   )
