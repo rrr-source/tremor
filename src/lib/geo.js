@@ -1,7 +1,14 @@
-import { geoNaturalEarth1 } from 'd3-geo'
+import { geoNaturalEarth1, geoOrthographic } from 'd3-geo'
 
 export function makeProjection(width, height) {
   return geoNaturalEarth1().fitSize([width, height], { type: 'Sphere' })
+}
+
+export function makeGlobeProjection(width, height, rotate) {
+  return geoOrthographic()
+    .fitSize([width, height], { type: 'Sphere' })
+    .rotate(rotate)
+    .clipAngle(90)
 }
 
 export function haversine(lat1, lon1, lat2, lon2) {

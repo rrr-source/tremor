@@ -143,6 +143,20 @@ body {
   overflow: hidden;
 }
 
+.world-map--globe {
+  cursor: grab;
+}
+.world-map--dragging {
+  cursor: grabbing;
+}
+/* In globe mode, markers inherit grab cursor instead of showing pointer */
+.world-map--globe .quake-marker {
+  cursor: inherit;
+}
+.world-map--globe svg {
+  user-select: none;
+}
+
 /* ── Map legend ───────────────────────────────────────── */
 .map-legend {
   position: absolute;

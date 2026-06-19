@@ -5,10 +5,15 @@ const PERIOD_OPTIONS = [
 ]
 
 const FILTER_OPTIONS = [
-  { value: 'all',         label: 'все'     },
-  { value: '2.5',         label: '2.5+'    },
-  { value: '4.5',         label: '4.5+'    },
+  { value: 'all',         label: 'все'      },
+  { value: '2.5',         label: '2.5+'     },
+  { value: '4.5',         label: '4.5+'     },
   { value: 'significant', label: 'значимые' },
+]
+
+const MAP_MODE_OPTIONS = [
+  { value: 'flat',  label: 'Карта'  },
+  { value: 'globe', label: 'Глобус' },
 ]
 
 function SegGroup({ options, value, onChange, label }) {
@@ -29,9 +34,15 @@ function SegGroup({ options, value, onChange, label }) {
   )
 }
 
-export function Controls({ filter, period, onFilterChange, onPeriodChange }) {
+export function Controls({ filter, period, onFilterChange, onPeriodChange, mapMode, onMapModeChange }) {
   return (
     <div className="controls">
+      <SegGroup
+        options={MAP_MODE_OPTIONS}
+        value={mapMode}
+        onChange={onMapModeChange}
+        label="Режим отображения"
+      />
       <SegGroup
         options={PERIOD_OPTIONS}
         value={period}

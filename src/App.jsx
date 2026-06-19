@@ -24,6 +24,7 @@ export default function App() {
   const updatedLabel = useRelativeTime(lastUpdated)
   const [selectedId, setSelectedId] = useState(null)
   const [nearMe, setNearMe] = useState(null)
+  const [mapMode, setMapMode] = useState('flat')
 
   // Clear selection when the selected quake leaves the current result set.
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function App() {
           period={period}
           onFilterChange={setFilter}
           onPeriodChange={setPeriod}
+          mapMode={mapMode}
+          onMapModeChange={setMapMode}
         />
       </header>
       <main className="app-main">
@@ -78,6 +81,7 @@ export default function App() {
             quakes={quakes}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            mode={mapMode}
           />
           <aside className="detail-rail">
             <NearMeButton
