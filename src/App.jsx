@@ -3,6 +3,7 @@ import { useQuakes } from './hooks/useQuakes.js'
 import { useRelativeTime } from './hooks/useRelativeTime.js'
 import { WorldMap } from './components/WorldMap.jsx'
 import { QuakeDetail } from './components/QuakeDetail.jsx'
+import { QuakeList } from './components/QuakeList.jsx'
 import { Controls } from './components/Controls.jsx'
 
 export default function App() {
@@ -57,6 +58,11 @@ export default function App() {
           />
           <aside className="detail-rail">
             <QuakeDetail quake={selectedQuake} />
+            <QuakeList
+              quakes={quakes}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+            />
           </aside>
         </div>
       </main>

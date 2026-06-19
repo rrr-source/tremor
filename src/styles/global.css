@@ -305,6 +305,87 @@ body {
   text-decoration: underline;
 }
 
+/* ── Quake list ───────────────────────────────────────── */
+.qlist {
+  border-top: 1px solid var(--bg-line);
+  padding-bottom: calc(var(--space) * 2);
+}
+
+.qlist-heading {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: calc(var(--space) * 2) calc(var(--space) * 2) calc(var(--space) * 1);
+}
+
+.qlist-items {
+  list-style: none;
+}
+
+.qlist-empty {
+  font-size: 13px;
+  color: var(--text-faint);
+  padding: calc(var(--space) * 1) calc(var(--space) * 2);
+}
+
+.qlist-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space) * 1);
+  width: 100%;
+  padding: calc(var(--space) * 0.875) calc(var(--space) * 2)
+           calc(var(--space) * 0.875) calc(var(--space) * 1.5);
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  min-width: 0;
+}
+
+.qlist-row:hover {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.qlist-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.qlist-row--selected {
+  background: var(--bg);
+  border-left-color: var(--accent);
+}
+
+.qlist-mag {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: var(--r-sm);
+  min-width: 38px;
+  text-align: center;
+}
+
+.qlist-place {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qlist-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
 /* Quake markers */
 .quake-marker {
   cursor: pointer;
