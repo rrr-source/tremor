@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuakes } from './hooks/useQuakes.js'
+import { WorldMap } from './components/WorldMap.jsx'
 
 function useRelativeTime(timestamp) {
   const [label, setLabel] = useState('')
@@ -44,6 +45,7 @@ export default function App() {
       </header>
       <main className="app-main">
         <p className="app-status mono">{statusText}</p>
+        <WorldMap />
       </main>
     </div>
   )
