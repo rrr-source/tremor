@@ -13,6 +13,8 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   const [size, setSize]       = useState({ width: 0, height: 0 })
   const [rotate, setRotate]   = useState([0, -20])
   const [dragging, setDragging] = useState(false)
+  const [hasRotated, setHasRotated] = useState(false)
+  const [hintOut, setHintOut] = useState(false)
 
   // Drag state lives in refs so pointer-move handlers never see stale closures.
   const dragRef            = useRef(null)   // { x, y, pointerId, el }
@@ -30,6 +32,13 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // Remove hint element from DOM after its fade-out completes.
+  useEffect(() => {
+    if (!hasRotated) return
+    const t = setTimeout(() => setHintOut(true), 450)
+    return () => clearTimeout(t)
+  }, [hasRotated])
 
   // Recompute projection + all paths whenever size, mode, or rotation changes.
   const { sphereD, graticuleD, landD, projection } = useMemo(() => {
@@ -78,6 +87,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
       if (Math.hypot(dx, dy) < 4) return
       didDrag.current = true
       dragRef.current.el.setPointerCapture(dragRef.current.pointerId)
+      if (!hasRotated) setHasRotated(true)
     }
     const k = 75 / (projRef.current?.scale() ?? 200)
     setRotate([
@@ -186,6 +196,15 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
             })}
           </g>
         </svg>
+      )}
+      {isGlobe && !hintOut && (
+        <div
+          className={`globe-hint${hasRotated ? ' globe-hint--out' : ''}`}
+          aria-hidden="true"
+        >
+          <span className="globe-hint-glyph">↻</span>
+          <span>Покрутите глобус</span>
+        </div>
       )}
       <Legend />
     </div>

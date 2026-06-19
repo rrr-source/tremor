@@ -24,7 +24,7 @@ export default function App() {
   const updatedLabel = useRelativeTime(lastUpdated)
   const [selectedId, setSelectedId] = useState(null)
   const [nearMe, setNearMe] = useState(null)
-  const [mapMode, setMapMode] = useState('flat')
+  const [mapMode, setMapMode] = useState('globe')
 
   // Clear selection when the selected quake leaves the current result set.
   useEffect(() => {

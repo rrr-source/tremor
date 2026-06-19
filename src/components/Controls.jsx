@@ -12,8 +12,8 @@ const FILTER_OPTIONS = [
 ]
 
 const MAP_MODE_OPTIONS = [
-  { value: 'flat',  label: 'Карта'  },
   { value: 'globe', label: 'Глобус' },
+  { value: 'flat',  label: 'Карта'  },
 ]
 
 function SegGroup({ options, value, onChange, label }) {

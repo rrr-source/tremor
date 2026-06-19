@@ -157,6 +157,66 @@ body {
   user-select: none;
 }
 
+/* ── Globe drag hint ───────────────────────────────────── */
+.globe-hint {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hint-fadein 400ms ease-in 600ms both;
+}
+
+.globe-hint--out {
+  animation: hint-fadeout 350ms ease-out forwards;
+}
+
+.globe-hint-glyph {
+  font-size: 20px;
+  display: inline-block;
+}
+
+@keyframes hint-fadein {
+  from { opacity: 0; }
+  to   { opacity: 0.55; }
+}
+
+@keyframes hint-fadeout {
+  from { opacity: 0.55; }
+  to   { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .globe-hint-glyph {
+    /* gentle oscillating rotation — starts after the fade-in completes */
+    animation: hint-wiggle 3s ease-in-out 1200ms infinite;
+  }
+
+  @keyframes hint-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    30%       { transform: rotate(-20deg); }
+    70%       { transform: rotate(20deg); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globe-hint {
+    animation: none;
+    opacity: 0.5;
+    transition: opacity 150ms ease-out;
+  }
+  .globe-hint--out {
+    opacity: 0;
+  }
+}
+
 /* ── Map legend ───────────────────────────────────────── */
 .map-legend {
   position: absolute;
