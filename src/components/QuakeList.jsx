@@ -19,7 +19,7 @@ export function QuakeList({ quakes, selectedId, onSelect }) {
     <section className="qlist">
       <h2 className="qlist-heading mono">Сильнейшие</h2>
       {top.length === 0 ? (
-        <p className="qlist-empty">Нет данных</p>
+        <p className="qlist-empty">Сейчас в этом окне нет толчков</p>
       ) : (
         <ul className="qlist-items">
           {top.map(q => {

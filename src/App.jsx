@@ -7,6 +7,15 @@ import { QuakeList } from './components/QuakeList.jsx'
 import { Controls } from './components/Controls.jsx'
 import { NearMeButton } from './components/NearMeButton.jsx'
 
+function pluralEvents(n) {
+  const last2 = n % 100
+  const last1 = n % 10
+  if (last2 >= 11 && last2 <= 19) return 'событий'
+  if (last1 === 1)                 return 'событие'
+  if (last1 >= 2 && last1 <= 4)   return 'события'
+  return 'событий'
+}
+
 export default function App() {
   const [filter, setFilter] = useState('2.5')
   const [period, setPeriod] = useState('day')
@@ -43,9 +52,9 @@ export default function App() {
   } else if (error && quakes.length === 0) {
     statusText = 'Не удалось загрузить данные USGS — повторяем…'
   } else if (error) {
-    statusText = `${quakes.length} событий · ошибка обновления`
+    statusText = `${quakes.length} ${pluralEvents(quakes.length)} · ошибка обновления`
   } else {
-    statusText = `${quakes.length} событий · обновлено ${updatedLabel}`
+    statusText = `${quakes.length} ${pluralEvents(quakes.length)} · обновлено ${updatedLabel}`
   }
 
   return (

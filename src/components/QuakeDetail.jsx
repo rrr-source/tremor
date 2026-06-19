@@ -9,14 +9,14 @@ const ALERT_LABELS = {
   red:    'критическая угроза',
 }
 
-function pluralPeople(n) {
+function feltPhrase(n) {
   const abs = Math.abs(Math.round(n))
   const last2 = abs % 100
   const last1 = abs % 10
-  if (last2 >= 11 && last2 <= 19) return 'человек'
-  if (last1 === 1) return 'человек'
-  if (last1 >= 2 && last1 <= 4) return 'человека'
-  return 'человек'
+  if (last2 >= 11 && last2 <= 19) return `${n} человек ощутили`
+  if (last1 === 1)                 return `${n} человек ощутил`
+  if (last1 >= 2 && last1 <= 4)   return `${n} человека ощутили`
+  return `${n} человек ощутили`
 }
 
 export function QuakeDetail({ quake, distanceKm }) {
@@ -65,9 +65,7 @@ export function QuakeDetail({ quake, distanceKm }) {
 
       {/* Felt count — omit if null or 0 */}
       {quake.felt > 0 && (
-        <p className="detail-felt mono">
-          Ощутили {quake.felt} {pluralPeople(quake.felt)}
-        </p>
+        <p className="detail-felt mono">{feltPhrase(quake.felt)}</p>
       )}
 
       {/* Warning badges */}

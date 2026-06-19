@@ -2,7 +2,10 @@ import { useRef, useState, useEffect, useMemo } from 'react'
 import { geoPath, geoGraticule10 } from 'd3-geo'
 import { makeProjection } from '../lib/geo.js'
 import { magColor, magRadius } from '../lib/magnitude.js'
+import { Legend } from './Legend.jsx'
 import land from '../data/land-110m.geo.json'
+
+const ONE_HOUR = 3_600_000
 
 export function WorldMap({ quakes = [], selectedId = null, onSelect }) {
   const containerRef = useRef(null)
@@ -38,6 +41,8 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect }) {
     [quakes]
   )
 
+  const now = Date.now()
+
   return (
     <div ref={containerRef} className="world-map">
       {sphereD && (
@@ -45,11 +50,12 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect }) {
           width={size.width}
           height={size.height}
           style={{ display: 'block' }}
-          aria-hidden="true"
+          role="region"
+          aria-label="Карта землетрясений"
         >
-          <path d={sphereD}    fill="var(--bg)"       stroke="var(--bg-line)"   strokeWidth={0.5} />
-          <path d={graticuleD} fill="none"            stroke="var(--graticule)" strokeWidth={0.3} />
-          <path d={landD}      fill="var(--land)"     stroke="var(--land-edge)" strokeWidth={0.5} />
+          <path d={sphereD}    aria-hidden="true" fill="var(--bg)"       stroke="var(--bg-line)"   strokeWidth={0.5} />
+          <path d={graticuleD} aria-hidden="true" fill="none"            stroke="var(--graticule)" strokeWidth={0.3} />
+          <path d={landD}      aria-hidden="true" fill="var(--land)"     stroke="var(--land-edge)" strokeWidth={0.5} />
 
           <g className="quake-layer">
             {sortedQuakes.map(q => {
@@ -59,13 +65,24 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect }) {
               const r = magRadius(q.mag)
               const color = magColor(q.mag)
               const isSelected = q.id === selectedId
+              const isFresh = (now - q.time) < ONE_HOUR
 
               return (
                 <g
                   key={q.id}
                   transform={`translate(${x},${y})`}
-                  className={`quake-marker${isSelected ? ' quake-selected' : ''}`}
+                  className={`quake-marker${isSelected ? ' quake-selected' : ''}${isFresh ? ' quake-fresh' : ''}`}
                   onClick={() => onSelect?.(q.id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      onSelect?.(q.id)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={q.title}
+                  aria-pressed={isSelected}
                 >
                   <title>{q.title}</title>
                   {isSelected && (
@@ -91,6 +108,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect }) {
           </g>
         </svg>
       )}
+      <Legend />
     </div>
   )
 }
