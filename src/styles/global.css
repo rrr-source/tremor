@@ -410,6 +410,42 @@ body {
   line-height: 1.55;
 }
 
+.near-me-info {
+  margin-top: calc(var(--space) * 1.25);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space) * 0.5);
+}
+
+.near-me-location-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 1px;
+}
+
+.near-me-location-icon {
+  color: #38bdf8; /* matches user-marker teal */
+  font-size: 8px;
+  line-height: 1;
+}
+
+.near-me-coords {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.near-me-country {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 /* ── Detail rail ──────────────────────────────────────── */
 .detail-rail {
   width: 340px;
@@ -808,6 +844,49 @@ body {
   top: 0;
   left: 0;
   pointer-events: none; /* clicks fall through to the SVG */
+}
+
+/* ── SVG overlay (user marker + selected ring) ─────────── */
+.map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* User "you are here" pulse ring */
+@keyframes user-marker-pulse {
+  0%   { transform: scale(1);   opacity: 0.75; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.user-marker-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .user-marker-ring {
+    animation: user-marker-pulse 2.2s ease-out infinite;
+  }
+}
+
+/* Selected quake pulsing ring */
+@keyframes sel-ring-pulse {
+  0%   { transform: scale(1);   opacity: 0.75; }
+  55%  { transform: scale(1.7); opacity: 0.1; }
+  100% { transform: scale(1);   opacity: 0.65; }
+}
+
+.sel-quake-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sel-quake-ring {
+    animation: sel-ring-pulse 1.8s ease-in-out infinite;
+  }
 }
 
 /* ── Dev perf HUD (tree-shaken in prod builds) ─────────── */

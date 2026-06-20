@@ -61,8 +61,9 @@ export default {
     },
   },
   nearme: {
-    button:            '📍 Nearest to me',
+    button:            'Nearest to me',
     loading:           'Locating you…',
+    location_label:    'My location',
     error_denied:      'Could not get location. Allow access in your browser and try again.',
     error_unavailable: 'Location is unavailable on this device.',
   },

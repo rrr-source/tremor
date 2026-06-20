@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { readState, writeState } from './lib/urlState.js'
 import { fetchQuakeById } from './lib/usgs.js'
 import { makeT, makePlural, LangProvider } from './i18n/context.jsx'
 import { useQuakes } from './hooks/useQuakes.js'
 import { useRelativeTime } from './hooks/useRelativeTime.js'
+import { useGeolocation } from './hooks/useGeolocation.js'
+import { detectCountry, localizedCountryName } from './lib/countryDetect.js'
 import { WorldMap } from './components/WorldMap.jsx'
 import { QuakeDetail } from './components/QuakeDetail.jsx'
 import { QuakeList } from './components/QuakeList.jsx'
@@ -25,6 +27,7 @@ export default function App() {
   const [lang, setLang]       = useState(_initialLang)
 
   const { quakes, loading, error, lastUpdated } = useQuakes({ filter, period })
+  const { coords, loading: geoLoading, error: geoError, request: geoRequest } = useGeolocation()
   // useRelativeTime takes lang directly — it runs before the LangProvider renders.
   const updatedLabel = useRelativeTime(lastUpdated, lang)
 
@@ -117,6 +120,16 @@ export default function App() {
     setNearMe({ quakeId, distanceKm })
   }
 
+  // Country detection — purely offline, coords never leave this component.
+  const countryFeature = useMemo(
+    () => (coords ? detectCountry(coords.lon, coords.lat) : null),
+    [coords]
+  )
+  const countryName = useMemo(
+    () => localizedCountryName(countryFeature, lang),
+    [countryFeature, lang]
+  )
+
   // Status text is built here, outside LangProvider, so we use standalone helpers.
   const t      = makeT(lang)
   const plural = makePlural(lang)
@@ -166,12 +179,19 @@ export default function App() {
               selectedId={selectedId}
               onSelect={setSelectedId}
               mode={mapMode}
+              userCoords={coords}
+              countryFeature={countryFeature}
             />
             <aside className="detail-rail">
               <NearMeButton
                 quakes={quakesForDisplay}
                 onSelect={setSelectedId}
                 onNearest={handleNearest}
+                coords={coords}
+                geoLoading={geoLoading}
+                geoError={geoError}
+                geoRequest={geoRequest}
+                countryName={countryName}
               />
               <QuakeDetail quake={selectedQuake} distanceKm={nearMeDistanceKm} />
               <QuakeList

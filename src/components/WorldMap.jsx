@@ -6,12 +6,14 @@ import { useTranslation } from '../i18n/context.jsx'
 import { Legend } from './Legend.jsx'
 import land from '../data/land-110m.geo.json'
 
+const TWO_PI = Math.PI * 2
+
 const HALF_PI = Math.PI / 2
 
 // Show the perf HUD in dev, or in any build when ?debug=1 is in the URL.
 const PERF_HUD = import.meta.env.DEV || location.search.includes('debug=1')
 
-export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'flat' }) {
+export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'flat', userCoords = null, countryFeature = null }) {
   const containerRef = useRef(null)
   const [size, setSize]       = useState({ width: 0, height: 0 })
   const [rotate, setRotate]   = useState([0, -20])
@@ -108,7 +110,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     return () => { if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null } }
   }, [selectedId, mode, quakes]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { sphereD, graticuleD, landD, projection } = useMemo(() => {
+  const { sphereD, graticuleD, landD, countryD, projection } = useMemo(() => {
     const { width, height } = size
     if (!width || !height) return {}
     const proj = mode === 'globe'
@@ -121,8 +123,9 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
       sphereD:    pathGen({ type: 'Sphere' }),
       graticuleD: pathGen(geoGraticule10()),
       landD:      pathGen(land),
+      countryD:   countryFeature ? pathGen(countryFeature) : null,
     }
-  }, [size, mode, rotate])
+  }, [size, mode, rotate, countryFeature])
 
   const sortedQuakes = useMemo(
     () => [...quakes].sort((a, b) => (a.mag ?? 0) - (b.mag ?? 0)),
@@ -153,7 +156,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     ctx.save()
     ctx.scale(dpr, dpr)
 
-    const TWO_PI   = Math.PI * 2
     const isGlobe_ = mode === 'globe'
     const center_  = [-rotate[0], -rotate[1]]
     let   rendered = 0
@@ -341,6 +343,15 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
           />
           <path d={graticuleD} aria-hidden="true" fill="none"        stroke="var(--graticule)" strokeWidth={0.3} />
           <path d={landD}      aria-hidden="true" fill="var(--land)" stroke="var(--land-edge)" strokeWidth={0.5} />
+          {countryD && (
+            <path
+              d={countryD}
+              aria-hidden="true"
+              fill="rgba(56,189,248,0.07)"
+              stroke="rgba(255,255,255,0.28)"
+              strokeWidth={1}
+            />
+          )}
         </svg>
       )}
       <canvas
@@ -349,6 +360,69 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
         style={{ width: size.width || 0, height: size.height || 0 }}
         aria-hidden="true"
       />
+
+      {/* SVG overlay: user marker + selected-quake animated ring. Above canvas, pointer-events: none. */}
+      {projection && size.width > 0 && (() => {
+        // User marker
+        const userVisible = userCoords && (
+          !isGlobe || geoDistance([userCoords.lon, userCoords.lat], globeCenter) < HALF_PI
+        )
+        const userPos = userVisible ? projection([userCoords.lon, userCoords.lat]) : null
+
+        // Selected quake ring
+        const selQ = selectedId ? sortedQuakes.find(q => q.id === selectedId) : null
+        const selVisible = selQ && (!isGlobe || geoDistance([selQ.lon, selQ.lat], globeCenter) < HALF_PI)
+        const selPos = selVisible ? projection([selQ.lon, selQ.lat]) : null
+        const selR   = selQ ? magRadius(selQ.mag) + 5 : 0
+        const selColor = selQ ? magColor(selQ.mag) : '#fff'
+
+        if (!userPos && !selPos) return null
+
+        return (
+          <svg
+            className="map-overlay"
+            width={size.width}
+            height={size.height}
+            aria-hidden="true"
+            style={{ display: 'block' }}
+          >
+            {selPos && (
+              <circle
+                key={selectedId}
+                className="sel-quake-ring"
+                cx={selPos[0]}
+                cy={selPos[1]}
+                r={selR}
+                fill="none"
+                stroke={selColor}
+                strokeWidth={2}
+              />
+            )}
+            {userPos && (
+              <g>
+                <circle
+                  className="user-marker-ring"
+                  cx={userPos[0]}
+                  cy={userPos[1]}
+                  r={12}
+                  fill="none"
+                  stroke="rgba(56,189,248,0.65)"
+                  strokeWidth={1.5}
+                />
+                <circle
+                  cx={userPos[0]}
+                  cy={userPos[1]}
+                  r={5}
+                  fill="white"
+                  stroke="rgba(56,189,248,0.9)"
+                  strokeWidth={1.5}
+                />
+              </g>
+            )}
+          </svg>
+        )
+      })()}
+
       {isGlobe && !hintOut && (
         <div
           className={`globe-hint${hasRotated ? ' globe-hint--out' : ''}`}
