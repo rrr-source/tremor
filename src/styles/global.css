@@ -91,6 +91,39 @@ body {
   outline-offset: -2px;
 }
 
+/* ── Share button ─────────────────────────────────────── */
+.share-btn {
+  background: none;
+  border: 1px solid var(--bg-line);
+  border-radius: var(--r-sm);
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 10px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.share-btn:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+.share-btn--ok {
+  color: var(--alert-green);
+  border-color: var(--alert-green);
+  background: color-mix(in srgb, var(--alert-green) 10%, transparent);
+}
+.share-btn--fail {
+  color: var(--text-dim);
+  border-color: var(--bg-line);
+  font-size: 11px;
+}
+.share-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .app-main {
   flex: 1;
   min-height: 0;

@@ -22,6 +22,18 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   const projRef            = useRef(null)
   const didDrag            = useRef(false)  // true once pointer moved > threshold
 
+  // rotateRef tracks the intended rotation value so animation effects don't
+  // need 'rotate' in their deps (which would retrigger on every drag frame).
+  const rotateRef       = useRef([0, -20])
+  const rafRef          = useRef(null)       // active requestAnimationFrame id
+  const lastAnimatedFor = useRef(null)       // dedup key: `${selectedId}:${mode}`
+
+  // Wrapper so both state and ref stay in sync; used everywhere instead of setRotate.
+  function applyRotate(r) {
+    rotateRef.current = r
+    setRotate(r)
+  }
+
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -39,6 +51,56 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     const t = setTimeout(() => setHintOut(true), 450)
     return () => clearTimeout(t)
   }, [hasRotated])
+
+  // Auto-rotate globe to face the selected quake.
+  // Deps: selectedId + mode (user action) + quakes (URL-loaded id may arrive after first fetch).
+  // lastAnimatedFor guards against re-running on poll refreshes when nothing changed.
+  useEffect(() => {
+    if (mode !== 'globe' || !selectedId) {
+      lastAnimatedFor.current = null
+      return
+    }
+
+    const key = `${selectedId}:${mode}`
+    if (lastAnimatedFor.current === key) return
+
+    const q = quakes.find(q => q.id === selectedId)
+    if (!q) return  // quake not in feed yet; effect re-runs when quakes updates
+
+    lastAnimatedFor.current = key
+
+    const toLon = -q.lon
+    const toLat = Math.max(-89, Math.min(89, -q.lat))
+    const [fromLon, fromLat] = rotateRef.current
+
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      applyRotate([toLon, toLat])
+      return
+    }
+
+    const DURATION = 600
+    const startTime = performance.now()
+
+    function tick(now) {
+      const raw = Math.min(1, (now - startTime) / DURATION)
+      // ease-in-out quadratic
+      const t = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2
+
+      // Shortest longitude arc (avoid wrapping the long way round the globe)
+      let dLon = toLon - fromLon
+      if (dLon >  180) dLon -= 360
+      if (dLon < -180) dLon += 360
+
+      applyRotate([fromLon + dLon * t, fromLat + (toLat - fromLat) * t])
+
+      rafRef.current = raw < 1 ? requestAnimationFrame(tick) : null
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null } }
+  }, [selectedId, mode, quakes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recompute projection + all paths whenever size, mode, or rotation changes.
   const { sphereD, graticuleD, landD, projection } = useMemo(() => {
@@ -72,6 +134,8 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
 
   function onPointerDown(e) {
     if (mode !== 'globe') return
+    // Cancel any auto-rotation so drag takes over immediately.
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
     didDrag.current = false
     dragRef.current = { x: e.clientX, y: e.clientY, pointerId: e.pointerId, el: e.currentTarget }
     rotateAtDragStart.current = [...rotate]
@@ -90,7 +154,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
       if (!hasRotated) setHasRotated(true)
     }
     const k = 75 / (projRef.current?.scale() ?? 200)
-    setRotate([
+    applyRotate([
       rotateAtDragStart.current[0] + dx * k,
       Math.max(-89, Math.min(89, rotateAtDragStart.current[1] - dy * k)),
     ])
