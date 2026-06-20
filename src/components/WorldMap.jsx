@@ -122,6 +122,37 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   const now = Date.now()
   const globeCenter = [-rotate[0], -rotate[1]]
 
+  // ── Click handler: nearest-center wins ────────────────────────────────────
+  // Finds the visible quake whose projected center is closest to the click
+  // point, within each quake's individual hit radius. One handler on the SVG
+  // replaces per-marker onClick so two overlapping quakes resolve correctly.
+
+  function handleMapClick(e) {
+    if (didDrag.current) { didDrag.current = false; return }
+    if (!projRef.current) return
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const cx = e.clientX - rect.left
+    const cy = e.clientY - rect.top
+
+    let best     = null
+    let bestDist = Infinity
+
+    for (const q of quakes) {
+      if (mode === 'globe' && geoDistance([q.lon, q.lat], globeCenter) >= HALF_PI) continue
+      const pos = projRef.current([q.lon, q.lat])
+      if (!pos) continue
+      const dist = Math.hypot(cx - pos[0], cy - pos[1])
+      const hitR = Math.max(magRadius(q.mag) + 8, 14)
+      if (dist <= hitR && dist < bestDist) {
+        bestDist = dist
+        best = q
+      }
+    }
+
+    if (best) onSelect?.(best.id)
+  }
+
   // ── Drag handlers ──────────────────────────────────────────────────────────
 
   function onPointerDown(e) {
@@ -171,6 +202,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
           style={{ display: 'block' }}
           role="region"
           aria-label="Tremor"
+          onClick={handleMapClick}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -212,10 +244,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
                   key={q.id}
                   transform={`translate(${x},${y})`}
                   className={`quake-marker${isSelected ? ' quake-selected' : ''}${isFresh ? ' quake-fresh' : ''}`}
-                  onClick={() => {
-                    if (didDrag.current) { didDrag.current = false; return }
-                    onSelect?.(q.id)
-                  }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
@@ -238,6 +266,13 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
                     fillOpacity={0.75}
                     stroke={color}
                     strokeWidth={0.8}
+                  />
+                  {/* Invisible hit circle — larger tap/click target; nearest-center
+                      logic in handleMapClick resolves overlapping quakes correctly */}
+                  <circle
+                    r={Math.max(r + 8, 14)}
+                    fill="transparent"
+                    pointerEvents="all"
                   />
                 </g>
               )
