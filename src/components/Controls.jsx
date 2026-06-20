@@ -1,8 +1,8 @@
 import { useTranslation } from '../i18n/context.jsx'
 
-function SegGroup({ options, value, onChange, label, displayLabel }) {
+function SegGroup({ options, value, onChange, label, displayLabel, groupId }) {
   return (
-    <div className="ctrl-group">
+    <div className={`ctrl-group${groupId ? ` ctrl-group--${groupId}` : ''}`}>
       <span className="ctrl-group-label mono" aria-hidden="true">{displayLabel}</span>
       <div className="seg-group" role="group" aria-label={label}>
         {options.map(opt => (
@@ -50,6 +50,7 @@ export function Controls({ filter, period, onFilterChange, onPeriodChange, mapMo
         onChange={onMapModeChange}
         label={t('controls.mode_aria')}
         displayLabel={t('controls.mode_label')}
+        groupId="mode"
       />
       <SegGroup
         options={periodOptions}
@@ -57,6 +58,7 @@ export function Controls({ filter, period, onFilterChange, onPeriodChange, mapMo
         onChange={onPeriodChange}
         label={t('controls.period_aria')}
         displayLabel={t('controls.period_label')}
+        groupId="period"
       />
       <SegGroup
         options={filterOptions}
@@ -64,6 +66,7 @@ export function Controls({ filter, period, onFilterChange, onPeriodChange, mapMo
         onChange={onFilterChange}
         label={t('controls.magnitude_aria')}
         displayLabel={t('controls.magnitude_label')}
+        groupId="mag"
       />
     </div>
   )

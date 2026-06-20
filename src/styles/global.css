@@ -125,6 +125,12 @@ body {
   outline-offset: -2px;
 }
 
+/* ── Fix #2: stable button widths across EN↔RU toggle ──── */
+/* "Глобус" (6ch) is wider than "Globe" (5ch) — lock both to 7ch */
+.ctrl-group--mode .seg-btn { min-width: calc(7ch + 20px); }
+/* "significant" (11ch) is wider than "значимые" (8ch) — lock last btn */
+.ctrl-group--mag .seg-btn:last-child { min-width: calc(12ch + 20px); }
+
 /* ── Language toggle ──────────────────────────────────── */
 .lang-toggle {
   display: flex;
@@ -183,6 +189,8 @@ body {
   flex-shrink: 0;
   margin-left: calc(var(--space) * 2);
   min-height: 30px;
+  /* "Поделиться" (10ch) is wider than "Share" (5ch) — stabilise idle width */
+  min-width: calc(11ch + 24px);
 }
 .share-btn:hover {
   border-color: var(--accent);
@@ -267,6 +275,7 @@ body {
 }
 .world-map--globe svg {
   user-select: none;
+  touch-action: none; /* Fix #3: prevent browser scroll on vertical drag; pointer events handle rotation */
 }
 
 /* ── Globe drag hint ───────────────────────────────────── */
@@ -705,16 +714,20 @@ body {
   }
 }
 
-/* ── Legend hidden on narrow screens ─────────────────── */
+/* ── Fix #4: single-page scroll + stack map above rail ── */
 @media (max-width: 840px) {
-  .map-legend {
-    display: none;
+  /* Let the document expand naturally so the user scrolls the whole page. */
+  html, body, #root {
+    height: auto;
   }
-}
-
-/* ── Responsive: stack map above rail at narrow width ── */
-@media (max-width: 840px) {
+  .app {
+    height: auto;
+  }
+  .app-main {
+    flex: none;
+  }
   .app-body {
+    flex: none;
     flex-direction: column;
   }
 
@@ -723,45 +736,68 @@ body {
     flex: none;
   }
 
+  /* Rail expands with its content — no internal scroll on mobile. */
   .detail-rail {
     width: 100%;
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    height: auto;
+    min-height: unset;
     border-left: none;
     border-top: 1px solid var(--bg-line);
-    /* on mobile let the whole rail scroll; sticky detail is a desktop concern */
-    overflow-y: auto;
+    overflow-y: visible;
     display: block;
   }
 
   .qlist {
-    overflow-y: visible;
     flex: none;
     min-height: auto;
   }
+
+  .map-legend {
+    display: none;
+  }
 }
 
-/* Hide status text and eyebrow labels first as width shrinks */
+/* ── Fix #1: mobile header — centered rows ───────────────── */
 @media (max-width: 640px) {
   .app-status {
     display: none;
   }
-}
 
-@media (max-width: 600px) {
-  .ctrl-group-label {
-    display: none;
+  /* Center all flex items so everything wraps into balanced rows. */
+  .app-header {
+    justify-content: center;
+    gap: calc(var(--space) * 0.75) calc(var(--space) * 1.5);
   }
-}
 
-@media (max-width: 480px) {
+  /* Wordmark fills its own row and centers the glyph + text within it. */
+  .app-wordmark {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Controls fill their row; seg-groups center-wrap inside it. */
   .controls {
     width: 100%;
     margin-left: 0;
-    margin-top: calc(var(--space) * 0.5);
+    justify-content: center;
+    flex-wrap: wrap;
     gap: calc(var(--space) * 1);
   }
+
+  /* Action buttons: no extra leading margin; parent centering handles spacing. */
+  .lang-toggle {
+    margin-left: 0;
+  }
+
   .share-btn {
-    margin-left: calc(var(--space) * 0.5);
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Hide eyebrow labels at very narrow widths to save vertical space. */
+  .ctrl-group-label {
+    display: none;
   }
 }
