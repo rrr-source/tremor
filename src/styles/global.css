@@ -42,10 +42,20 @@ body {
 }
 
 .app-wordmark {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--accent);
+  flex-shrink: 0;
+}
+
+.app-wordmark-glyph {
+  display: block;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 

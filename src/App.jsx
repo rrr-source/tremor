@@ -136,7 +136,14 @@ export default function App() {
     <LangProvider lang={lang} setLang={setLang}>
       <div className="app">
         <header className="app-header">
-          <span className="app-wordmark mono">TREMOR</span>
+          <span className="app-wordmark mono">
+            <svg className="app-wordmark-glyph" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <circle cx="16" cy="16" r="3"    fill="#ff5a36"/>
+              <circle cx="16" cy="16" r="8.5"  fill="none" stroke="#ff5a36" strokeWidth="1.5" opacity="0.52"/>
+              <circle cx="16" cy="16" r="14.5" fill="none" stroke="#ff5a36" strokeWidth="1"   opacity="0.22"/>
+            </svg>
+            TREMOR
+          </span>
           <p className="app-status mono">
             <span className="live-dot" aria-hidden="true" />
             {statusText}
