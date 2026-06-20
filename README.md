@@ -18,6 +18,7 @@ Built on the public USGS real-time feeds. No API key, no tiles, no tracking.
 
 - **Live map.** Every quake in the selected window, plotted on an elegant dark world map.
   Marker size encodes magnitude, color encodes intensity. The newest events pulse.
+  Switch between a flat Natural Earth projection and a draggable orthographic globe.
 - **Read the event.** Click any quake for an instrument-style readout: place, local time and
   "how long ago", depth, magnitude, **felt reports** (USGS "Did You Feel It"), tsunami flag,
   and PAGER alert level.
@@ -26,16 +27,18 @@ Built on the public USGS real-time feeds. No API key, no tiles, no tracking.
 - **Nearest to you.** One tap uses your location to find the closest recent quake and the
   distance to it.
 - **Biggest right now.** A ranked list of the strongest events in view, synced with the map.
+- **EN / RU interface.** Full English and Russian translations. Defaults to English; auto-detects
+  Russian browsers. Toggle persists in the URL so shared links open in the right language.
+- **Shareable links.** The Share button copies a URL that encodes the current filter, time
+  window, map mode, language, and selected event — anyone opening it sees exactly the same view.
 
 ## Stack
 
 | Concern        | Choice                                                        |
 | -------------- | ------------------------------------------------------------ |
 | Build / dev    | Vite + React 18 (JSX)                                         |
-| Map            | `d3-geo` (Natural Earth projection), hand-rendered SVG       |
+| Map            | `d3-geo` (Natural Earth + orthographic projections), SVG     |
 | Geometry       | Natural Earth 110m land, pre-converted to GeoJSON & embedded |
-| Color / scale  | `d3-scale`                                                   |
-| Pan / zoom     | `d3-zoom`                                                    |
 | Styling        | Plain CSS with custom-property design tokens                 |
 | Data           | USGS GeoJSON summary feeds (no key, CORS-enabled)            |
 
@@ -58,8 +61,6 @@ npm run build    # production build to /dist
 npm run preview  # serve the production build locally
 ```
 
-Drop the provided `land-110m.geo.json` into `src/data/` before running (see PROMPTS.md, step 0).
-
 ## Project structure
 
 ```
@@ -67,22 +68,29 @@ src/
   main.jsx
   App.jsx
   data/
-    land-110m.geo.json     # embedded world land geometry (provided)
+    land-110m.geo.json     # embedded world land geometry
+  i18n/
+    en.js                  # English strings (primary)
+    ru.js                  # Russian strings
+    context.jsx            # LangProvider, useTranslation, makeT/makePlural helpers
   lib/
     usgs.js                # feed URLs, fetch, normalize to a clean quake shape
-    magnitude.js           # energy formula, TNT equivalent, color scale, formatting
+    magnitude.js           # energy formula, TNT equivalent, color/radius scale
     geo.js                 # projection helpers, haversine distance
+    urlState.js            # encode/decode app state in the URL query string
   hooks/
-    useQuakes.js           # fetch + 60s polling + filter state
+    useQuakes.js           # fetch + 60 s polling
     useGeolocation.js
+    useRelativeTime.js
   components/
-    Header.jsx             # title + live status + last-updated
-    Controls.jsx           # time window + magnitude filter
-    WorldMap.jsx           # d3-geo SVG map + quake markers + zoom
+    Controls.jsx           # time window + magnitude filter + map-mode toggle
+    LangToggle.jsx         # EN / RU language switcher
+    ShareButton.jsx        # copy current URL to clipboard
+    WorldMap.jsx           # d3-geo SVG map + quake markers + globe drag
     QuakeDetail.jsx        # selected-event instrument readout
-    QuakeList.jsx          # "biggest now"
-    EnergyBar.jsx          # magnitude -> energy / TNT visual
-    NearMeButton.jsx       # geolocation -> nearest quake
+    QuakeList.jsx          # "strongest now" ranked list
+    EnergyBar.jsx          # magnitude → energy / TNT visual
+    NearMeButton.jsx       # geolocation → nearest quake
     Legend.jsx
   styles/
     tokens.css             # colors, type, spacing (single source of truth)
@@ -107,18 +115,18 @@ This product uses USGS data but is not endorsed by or affiliated with the USGS.
 - [x] Nearest to me — one-tap geolocation, haversine distance, coordinates never stored
 - [x] Biggest now — ranked list synced with the map, two-way selection
 - [x] Globe mode — orthographic projection, drag to rotate, back-face culling
+- [x] Shareable URL — filter, time window, map mode, selected event, and language all encoded in the query string
+- [x] EN / RU i18n — English default, Russian auto-detected from browser, toggle persists in `?lang=`
 
 **Known / planned**
 
 - Mobile layout needs real-device testing before deploy (responsive CSS exists, untested on hardware)
-- EN / RU language toggle (i18n pass; all strings are already whole phrases, not concatenated fragments)
 - Sticky detail panel via `position: sticky` (currently the whole rail scrolls as one column)
 
 **Later**
 
 - Time scrubber — replay the last 24 h
 - Population overlay to estimate human exposure
-- Shareable deep-link per event
 
 ## License
 
