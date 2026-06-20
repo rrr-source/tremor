@@ -29,6 +29,11 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   const rafRef          = useRef(null)
   const lastAnimatedFor = useRef(null)
 
+  // Dev perf HUD — refs only, no state, so measuring doesn't add render overhead.
+  const perfFpsRef   = useRef(null)
+  const perfLastTime = useRef(null)
+  const perfRollMs   = useRef([])
+
   function applyRotate(r) {
     rotateRef.current = r
     setRotate(r)
@@ -179,16 +184,35 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
       rotateAtDragStart.current[0] + dx * k,
       Math.max(-89, Math.min(89, rotateAtDragStart.current[1] - dy * k)),
     ])
+    // Direct DOM write — no setState so the measurement doesn't add a render.
+    if (import.meta.env.DEV && perfFpsRef.current) {
+      const t = performance.now()
+      if (perfLastTime.current !== null) {
+        const dt = t - perfLastTime.current
+        perfRollMs.current.push(dt)
+        if (perfRollMs.current.length > 8) perfRollMs.current.shift()
+        const avg = perfRollMs.current.reduce((a, b) => a + b, 0) / perfRollMs.current.length
+        perfFpsRef.current.textContent = `${avg.toFixed(0)}ms · ${Math.round(1000 / avg)}fps`
+      }
+      perfLastTime.current = t
+    }
   }
 
   function onPointerUp() {
     dragRef.current = null
     setDragging(false)
+    if (import.meta.env.DEV) {
+      perfLastTime.current = null
+      perfRollMs.current = []
+    }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const isGlobe = mode === 'globe'
+
+  // Incremented inside the map loop below; read in the HUD after the loop runs.
+  let devRenderedCount = 0
 
   return (
     <div
@@ -238,6 +262,8 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
               const color      = magColor(q.mag)
               const isSelected = q.id === selectedId
               const isFresh    = (now - q.time) < ONE_HOUR
+
+              if (import.meta.env.DEV) devRenderedCount++
 
               return (
                 <g
@@ -290,6 +316,12 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
         </div>
       )}
       <Legend />
+      {import.meta.env.DEV && (
+        <div className="perf-hud" aria-hidden="true">
+          <span className="perf-hud-line mono">{devRenderedCount} pts</span>
+          <span className="perf-hud-line mono" ref={perfFpsRef}>—</span>
+        </div>
+      )}
     </div>
   )
 }
