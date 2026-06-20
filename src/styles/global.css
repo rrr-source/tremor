@@ -802,6 +802,14 @@ body {
   }
 }
 
+/* ── Canvas marker overlay ─────────────────────────────── */
+.quake-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* clicks fall through to the SVG */
+}
+
 /* ── Dev perf HUD (tree-shaken in prod builds) ─────────── */
 .perf-hud {
   position: absolute;

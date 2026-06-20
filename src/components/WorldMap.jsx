@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect, useMemo } from 'react'
 import { geoPath, geoGraticule10, geoDistance } from 'd3-geo'
 import { makeProjection, makeGlobeProjection } from '../lib/geo.js'
 import { magColor, magRadius } from '../lib/magnitude.js'
@@ -6,8 +6,10 @@ import { useTranslation } from '../i18n/context.jsx'
 import { Legend } from './Legend.jsx'
 import land from '../data/land-110m.geo.json'
 
-const ONE_HOUR = 3_600_000
-const HALF_PI  = Math.PI / 2
+const HALF_PI = Math.PI / 2
+
+// Show the perf HUD in dev, or in any build when ?debug=1 is in the URL.
+const PERF_HUD = import.meta.env.DEV || location.search.includes('debug=1')
 
 export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'flat' }) {
   const containerRef = useRef(null)
@@ -33,6 +35,9 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   const perfFpsRef   = useRef(null)
   const perfLastTime = useRef(null)
   const perfRollMs   = useRef([])
+  const perfCountRef = useRef(null)
+
+  const canvasRef = useRef(null)
 
   function applyRotate(r) {
     rotateRef.current = r
@@ -124,7 +129,96 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     [quakes]
   )
 
-  const now = Date.now()
+  // ── Canvas marker draw ─────────────────────────────────────────────────────
+  // useLayoutEffect so canvas updates in the same frame as the SVG base layer —
+  // avoids a one-frame lag where land moves but dots don't.
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !projection || !size.width || !size.height) return
+
+    const dpr = window.devicePixelRatio || 1
+    const w   = size.width
+    const h   = size.height
+    const cw  = Math.round(w * dpr)
+    const ch  = Math.round(h * dpr)
+
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width  = cw
+      canvas.height = ch
+    }
+
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, cw, ch)
+    ctx.save()
+    ctx.scale(dpr, dpr)
+
+    const TWO_PI   = Math.PI * 2
+    const isGlobe_ = mode === 'globe'
+    const center_  = [-rotate[0], -rotate[1]]
+    let   rendered = 0
+
+    // Pass 1: all non-selected quakes, low→high mag so larger dots paint on top.
+    for (const q of sortedQuakes) {
+      if (q.id === selectedId) continue
+      if (isGlobe_ && geoDistance([q.lon, q.lat], center_) >= HALF_PI) continue
+      const pos = projection([q.lon, q.lat])
+      if (!pos) continue
+      const [x, y] = pos
+      const r     = magRadius(q.mag)
+      const color = magColor(q.mag)
+
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, TWO_PI)
+      ctx.globalAlpha = 0.75
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.globalAlpha = 1
+      ctx.strokeStyle = color
+      ctx.lineWidth = 0.8
+      ctx.stroke()
+      rendered++
+    }
+
+    // Pass 2: selected quake drawn on top with its selection ring.
+    if (selectedId) {
+      const q = sortedQuakes.find(q => q.id === selectedId)
+      const isVisible = q && (!isGlobe_ || geoDistance([q.lon, q.lat], center_) < HALF_PI)
+      const pos = isVisible ? projection([q.lon, q.lat]) : null
+      if (q && pos) {
+        const [x, y] = pos
+        const r     = magRadius(q.mag)
+        const color = magColor(q.mag)
+
+        // Selection ring
+        ctx.beginPath()
+        ctx.arc(x, y, r + 5, 0, TWO_PI)
+        ctx.globalAlpha = 0.7
+        ctx.strokeStyle = color
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+
+        // Dot
+        ctx.beginPath()
+        ctx.arc(x, y, r, 0, TWO_PI)
+        ctx.globalAlpha = 0.75
+        ctx.fillStyle = color
+        ctx.fill()
+        ctx.globalAlpha = 1
+        ctx.strokeStyle = color
+        ctx.lineWidth = 0.8
+        ctx.stroke()
+        rendered++
+      }
+    }
+
+    ctx.restore()
+
+    if (PERF_HUD && perfCountRef.current) {
+      perfCountRef.current.textContent = `${rendered} pts`
+    }
+  }, [sortedQuakes, projection, selectedId, size, mode, rotate]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const globeCenter = [-rotate[0], -rotate[1]]
 
   // ── Click handler: nearest-center wins ────────────────────────────────────
@@ -185,7 +279,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
       Math.max(-89, Math.min(89, rotateAtDragStart.current[1] - dy * k)),
     ])
     // Direct DOM write — no setState so the measurement doesn't add a render.
-    if (import.meta.env.DEV && perfFpsRef.current) {
+    if (PERF_HUD && perfFpsRef.current) {
       const t = performance.now()
       if (perfLastTime.current !== null) {
         const dt = t - perfLastTime.current
@@ -201,7 +295,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   function onPointerUp() {
     dragRef.current = null
     setDragging(false)
-    if (import.meta.env.DEV) {
+    if (PERF_HUD) {
       perfLastTime.current = null
       perfRollMs.current = []
     }
@@ -210,9 +304,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const isGlobe = mode === 'globe'
-
-  // Incremented inside the map loop below; read in the HUD after the loop runs.
-  let devRenderedCount = 0
 
   return (
     <div
@@ -250,62 +341,14 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
           />
           <path d={graticuleD} aria-hidden="true" fill="none"        stroke="var(--graticule)" strokeWidth={0.3} />
           <path d={landD}      aria-hidden="true" fill="var(--land)" stroke="var(--land-edge)" strokeWidth={0.5} />
-
-          <g className="quake-layer">
-            {sortedQuakes.map(q => {
-              if (isGlobe && geoDistance([q.lon, q.lat], globeCenter) >= HALF_PI) return null
-
-              const pos = projection([q.lon, q.lat])
-              if (!pos) return null
-              const [x, y] = pos
-              const r          = magRadius(q.mag)
-              const color      = magColor(q.mag)
-              const isSelected = q.id === selectedId
-              const isFresh    = (now - q.time) < ONE_HOUR
-
-              if (import.meta.env.DEV) devRenderedCount++
-
-              return (
-                <g
-                  key={q.id}
-                  transform={`translate(${x},${y})`}
-                  className={`quake-marker${isSelected ? ' quake-selected' : ''}${isFresh ? ' quake-fresh' : ''}`}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      onSelect?.(q.id)
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={q.title}
-                  aria-pressed={isSelected}
-                >
-                  <title>{q.title}</title>
-                  {isSelected && (
-                    <circle r={r + 5} fill="none" stroke={color} strokeWidth={1.5} strokeOpacity={0.7} />
-                  )}
-                  <circle
-                    className="quake-dot"
-                    r={r}
-                    fill={color}
-                    fillOpacity={0.75}
-                    stroke={color}
-                    strokeWidth={0.8}
-                  />
-                  {/* Invisible hit circle — larger tap/click target; nearest-center
-                      logic in handleMapClick resolves overlapping quakes correctly */}
-                  <circle
-                    r={Math.max(r + 8, 14)}
-                    fill="transparent"
-                    pointerEvents="all"
-                  />
-                </g>
-              )
-            })}
-          </g>
         </svg>
       )}
+      <canvas
+        ref={canvasRef}
+        className="quake-canvas"
+        style={{ width: size.width || 0, height: size.height || 0 }}
+        aria-hidden="true"
+      />
       {isGlobe && !hintOut && (
         <div
           className={`globe-hint${hasRotated ? ' globe-hint--out' : ''}`}
@@ -316,9 +359,9 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
         </div>
       )}
       <Legend />
-      {import.meta.env.DEV && (
+      {PERF_HUD && (
         <div className="perf-hud" aria-hidden="true">
-          <span className="perf-hud-line mono">{devRenderedCount} pts</span>
+          <span className="perf-hud-line mono" ref={perfCountRef}>0 pts</span>
           <span className="perf-hud-line mono" ref={perfFpsRef}>—</span>
         </div>
       )}
