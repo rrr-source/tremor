@@ -1,7 +1,11 @@
 import { geoNaturalEarth1, geoOrthographic } from 'd3-geo'
 
 export function makeProjection(width, height) {
-  return geoNaturalEarth1().fitSize([width, height], { type: 'Sphere' })
+  const proj = geoNaturalEarth1().fitSize([width, height], { type: 'Sphere' })
+  // fitSize centers the bounding box, but force ty = height/2 to guarantee the
+  // equator lands at the vertical midpoint regardless of d3 internal rounding.
+  const [tx] = proj.translate()
+  return proj.translate([tx, height / 2])
 }
 
 export function makeGlobeProjection(width, height, rotate) {

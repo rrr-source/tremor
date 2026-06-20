@@ -142,6 +142,10 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <span className="app-wordmark mono">TREMOR</span>
+        <p className="app-status mono">
+          <span className="live-dot" aria-hidden="true" />
+          {statusText}
+        </p>
         <Controls
           filter={filter}
           period={period}
@@ -153,10 +157,6 @@ export default function App() {
         <ShareButton />
       </header>
       <main className="app-main">
-        <p className="app-status mono">
-          <span className="live-dot" aria-hidden="true" />
-          {statusText}
-        </p>
         <div className="app-body">
           <WorldMap
             quakes={quakesForDisplay}
