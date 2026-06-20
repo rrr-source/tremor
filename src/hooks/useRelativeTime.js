@@ -1,28 +1,27 @@
 import { useState, useEffect } from 'react'
+import { makeT } from '../i18n/context.jsx'
 
-function formatRelative(elapsed) {
+function formatRelative(elapsed, t) {
   const secs = Math.floor(elapsed / 1000)
-  if (secs < 60)    return `${secs} сек назад`
-  if (secs < 3600)  return `${Math.floor(secs / 60)} мин назад`
-  if (secs < 86400) return `${Math.floor(secs / 3600)} ч назад`
-  return `${Math.floor(secs / 86400)} дн назад`
+  if (secs < 60)    return t('time.s_ago', { n: secs })
+  if (secs < 3600)  return t('time.m_ago', { n: Math.floor(secs / 60) })
+  if (secs < 86400) return t('time.h_ago', { n: Math.floor(secs / 3600) })
+  return t('time.d_ago', { n: Math.floor(secs / 86400) })
 }
 
-export function useRelativeTime(timestamp) {
+export function useRelativeTime(timestamp, lang = 'en') {
   const [label, setLabel] = useState('')
 
   useEffect(() => {
-    if (!timestamp) {
-      setLabel('')
-      return
-    }
+    if (!timestamp) { setLabel(''); return }
+    const t = makeT(lang)
     function update() {
-      setLabel(formatRelative(Date.now() - timestamp))
+      setLabel(formatRelative(Date.now() - timestamp, t))
     }
     update()
     const id = setInterval(update, 10_000)
     return () => clearInterval(id)
-  }, [timestamp])
+  }, [timestamp, lang])
 
   return label
 }

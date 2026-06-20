@@ -1,18 +1,12 @@
 import { useEffect } from 'react'
+import { useTranslation } from '../i18n/context.jsx'
 import { useGeolocation } from '../hooks/useGeolocation.js'
 import { haversine } from '../lib/geo.js'
 
-const ERROR_MESSAGES = {
-  denied: 'Не удалось получить геопозицию. Разрешите доступ в браузере и попробуйте снова.',
-  unavailable: 'Геопозиция недоступна на этом устройстве.',
-}
-
 export function NearMeButton({ quakes, onSelect, onNearest }) {
   const { coords, loading, error, request } = useGeolocation()
+  const { t } = useTranslation()
 
-  // Runs only when coords change (one-shot per request). quakes read from
-  // closure at effect time — always current because coords only change after
-  // a fresh getCurrentPosition call, by which point quakes are loaded.
   useEffect(() => {
     if (!coords || quakes.length === 0) return
     let nearest = null
@@ -35,11 +29,13 @@ export function NearMeButton({ quakes, onSelect, onNearest }) {
         disabled={loading}
         aria-busy={loading}
       >
-        {loading ? 'Определяем геопозицию…' : '📍 Ближайший ко мне'}
+        {loading ? t('nearme.loading') : t('nearme.button')}
       </button>
       {error && (
         <p className="near-me-error">
-          {ERROR_MESSAGES[error] ?? ERROR_MESSAGES.unavailable}
+          {error === 'denied'
+            ? t('nearme.error_denied')
+            : t('nearme.error_unavailable')}
         </p>
       )}
     </div>

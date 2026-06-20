@@ -1,41 +1,26 @@
+import { useTranslation } from '../i18n/context.jsx'
 import { useRelativeTime } from '../hooks/useRelativeTime.js'
-import { magColor, formatMag, formatDepth } from '../lib/magnitude.js'
+import { magColor, formatMag } from '../lib/magnitude.js'
 import { EnergyBar } from './EnergyBar.jsx'
 
-const ALERT_LABELS = {
-  green:  'низкая угроза',
-  yellow: 'средняя угроза',
-  orange: 'серьёзная угроза',
-  red:    'критическая угроза',
-}
-
-function feltPhrase(n) {
-  const abs = Math.abs(Math.round(n))
-  const last2 = abs % 100
-  const last1 = abs % 10
-  if (last2 >= 11 && last2 <= 19) return `${n} человек ощутили`
-  if (last1 === 1)                 return `${n} человек ощутил`
-  if (last1 >= 2 && last1 <= 4)   return `${n} человека ощутили`
-  return `${n} человек ощутили`
-}
-
 export function QuakeDetail({ quake, distanceKm }) {
-  const relTime = useRelativeTime(quake?.time ?? null)
+  const { lang, t, plural } = useTranslation()
+  const relTime = useRelativeTime(quake?.time ?? null, lang)
 
   if (!quake) {
     return (
       <div className="quake-detail quake-detail--empty">
-        <p className="quake-detail-placeholder">Выберите толчок на карте</p>
+        <p className="quake-detail-placeholder">{t('detail.placeholder')}</p>
       </div>
     )
   }
 
   const color = magColor(quake.mag)
 
-  const absTime = new Date(quake.time).toLocaleString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
+  const absTime = new Date(quake.time).toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US', {
+    day:    'numeric',
+    month:  'long',
+    hour:   '2-digit',
     minute: '2-digit',
   })
 
@@ -50,40 +35,46 @@ export function QuakeDetail({ quake, distanceKm }) {
       </div>
 
       {quake.magType && (
-        <p className="detail-magtype mono">тип: {quake.magType}</p>
+        <p className="detail-magtype mono">{t('detail.type_label', { type: quake.magType })}</p>
       )}
 
       {/* Location, time, depth */}
       <div className="detail-section">
         <p className="detail-place">{quake.place}</p>
         <p className="detail-time mono">{absTime} · {relTime}</p>
-        <p className="detail-depth mono">Глубина: {formatDepth(quake.depth)}</p>
+        <p className="detail-depth mono">
+          {quake.depth != null
+            ? t('detail.depth_label', { n: Math.round(quake.depth) })
+            : '—'}
+        </p>
         {distanceKm != null && (
-          <p className="detail-distance mono">в {distanceKm.toLocaleString('ru-RU')} км от вас</p>
+          <p className="detail-distance mono">
+            {t('detail.distance', { n: distanceKm.toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US') })}
+          </p>
         )}
       </div>
 
       {/* Felt count — omit if null or 0 */}
       {quake.felt > 0 && (
-        <p className="detail-felt mono">{feltPhrase(quake.felt)}</p>
+        <p className="detail-felt mono">{plural('detail.felt', quake.felt)}</p>
       )}
 
       {/* Warning badges */}
       {(quake.tsunami === 1 || quake.alert) && (
         <div className="detail-badges">
           {quake.tsunami === 1 && (
-            <span className="badge badge--tsunami">ЦУНАМИ</span>
+            <span className="badge badge--tsunami">{t('detail.tsunami')}</span>
           )}
           {quake.alert && (
             <span
               className="badge"
               style={{
-                color: `var(--alert-${quake.alert})`,
+                color:       `var(--alert-${quake.alert})`,
                 borderColor: `var(--alert-${quake.alert})`,
-                background: `color-mix(in srgb, var(--alert-${quake.alert}) 12%, transparent)`,
+                background:  `color-mix(in srgb, var(--alert-${quake.alert}) 12%, transparent)`,
               }}
             >
-              {ALERT_LABELS[quake.alert] ?? quake.alert}
+              {t(`detail.alert.${quake.alert}`) || quake.alert}
             </span>
           )}
         </div>
@@ -97,7 +88,7 @@ export function QuakeDetail({ quake, distanceKm }) {
         rel="noopener noreferrer"
         className="detail-link"
       >
-        Подробнее на USGS →
+        {t('detail.usgs_link')}
       </a>
     </div>
   )

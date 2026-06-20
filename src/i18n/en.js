@@ -1,0 +1,86 @@
+export default {
+  header: {
+    title: 'Tremor — live earthquakes',
+  },
+  status: {
+    loading:       'Loading data…',
+    error_no_data: 'Failed to load USGS data — retrying…',
+    events_updated: {
+      one:   '{n} event · updated {when}',
+      other: '{n} events · updated {when}',
+    },
+    events_error: {
+      one:   '{n} event · update error',
+      other: '{n} events · update error',
+    },
+  },
+  controls: {
+    mode_label:      'MODE',
+    mode_aria:       'Display mode',
+    period_label:    'PERIOD',
+    period_aria:     'Time period',
+    magnitude_label: 'MAGNITUDE',
+    magnitude_aria:  'Minimum magnitude',
+    globe:           'Globe',
+    map:             'Map',
+    period_day:      '24h',
+    period_week:     '7d',
+    period_month:    '30d',
+    filter_all:      'all',
+    filter_significant: 'significant',
+  },
+  share: {
+    idle: 'Share',
+    ok:   'Link copied',
+    fail: 'Copy from address bar',
+  },
+  detail: {
+    placeholder: 'Select an earthquake on the map',
+    type_label:  'type: {type}',
+    depth_label: 'Depth: {n} km',
+    distance:    '{n} km from you',
+    usgs_link:   'Details on USGS →',
+    felt: {
+      one:   '{n} person felt it',
+      other: '{n} people felt it',
+    },
+    tsunami: 'TSUNAMI',
+    alert: {
+      green:  'low threat',
+      yellow: 'moderate threat',
+      orange: 'serious threat',
+      red:    'critical threat',
+    },
+  },
+  energy: {
+    kg_tnt: '≈ {n} kg TNT',
+    t_tnt:  '≈ {n} t TNT',
+    hiroshima: {
+      one:   '≈ {n} Hiroshima bomb',
+      other: '≈ {n} Hiroshima bombs',
+    },
+  },
+  nearme: {
+    button:            '📍 Nearest to me',
+    loading:           'Locating you…',
+    error_denied:      'Could not get location. Allow access in your browser and try again.',
+    error_unavailable: 'Location is unavailable on this device.',
+  },
+  list: {
+    heading: 'Strongest',
+    empty:   'No earthquakes in this window',
+  },
+  globe_hint:  'Drag to rotate',
+  legend_aria: 'Magnitude scale',
+  lang_toggle_aria: 'Language',
+  time: {
+    short_s: '{n}s',
+    short_m: '{n}m',
+    short_h: '{n}h',
+    short_d: '{n}d',
+    s_ago:   '{n}s ago',
+    m_ago:   '{n}m ago',
+    h_ago:   '{n}h ago',
+    d_ago:   '{n}d ago',
+  },
+}

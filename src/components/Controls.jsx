@@ -1,20 +1,4 @@
-const PERIOD_OPTIONS = [
-  { value: 'day',   label: '24ч' },
-  { value: 'week',  label: '7д'  },
-  { value: 'month', label: '30д' },
-]
-
-const FILTER_OPTIONS = [
-  { value: 'all',         label: 'все'      },
-  { value: '2.5',         label: '2.5+'     },
-  { value: '4.5',         label: '4.5+'     },
-  { value: 'significant', label: 'значимые' },
-]
-
-const MAP_MODE_OPTIONS = [
-  { value: 'globe', label: 'Глобус' },
-  { value: 'flat',  label: 'Карта'  },
-]
+import { useTranslation } from '../i18n/context.jsx'
 
 function SegGroup({ options, value, onChange, label, displayLabel }) {
   return (
@@ -38,28 +22,48 @@ function SegGroup({ options, value, onChange, label, displayLabel }) {
 }
 
 export function Controls({ filter, period, onFilterChange, onPeriodChange, mapMode, onMapModeChange }) {
+  const { t } = useTranslation()
+
+  const mapModeOptions = [
+    { value: 'globe', label: t('controls.globe') },
+    { value: 'flat',  label: t('controls.map')   },
+  ]
+
+  const periodOptions = [
+    { value: 'day',   label: t('controls.period_day')   },
+    { value: 'week',  label: t('controls.period_week')  },
+    { value: 'month', label: t('controls.period_month') },
+  ]
+
+  const filterOptions = [
+    { value: 'all',         label: t('controls.filter_all')         },
+    { value: '2.5',         label: '2.5+'                           },
+    { value: '4.5',         label: '4.5+'                           },
+    { value: 'significant', label: t('controls.filter_significant') },
+  ]
+
   return (
     <div className="controls">
       <SegGroup
-        options={MAP_MODE_OPTIONS}
+        options={mapModeOptions}
         value={mapMode}
         onChange={onMapModeChange}
-        label="Режим отображения"
-        displayLabel="РЕЖИМ"
+        label={t('controls.mode_aria')}
+        displayLabel={t('controls.mode_label')}
       />
       <SegGroup
-        options={PERIOD_OPTIONS}
+        options={periodOptions}
         value={period}
         onChange={onPeriodChange}
-        label="Временной период"
-        displayLabel="ПЕРИОД"
+        label={t('controls.period_aria')}
+        displayLabel={t('controls.period_label')}
       />
       <SegGroup
-        options={FILTER_OPTIONS}
+        options={filterOptions}
         value={filter}
         onChange={onFilterChange}
-        label="Минимальная магнитуда"
-        displayLabel="МАГНИТУДА"
+        label={t('controls.magnitude_aria')}
+        displayLabel={t('controls.magnitude_label')}
       />
     </div>
   )

@@ -1,3 +1,4 @@
+import { useTranslation } from '../i18n/context.jsx'
 import { magColor, magRadius } from '../lib/magnitude.js'
 
 const TIERS = [
@@ -7,11 +8,12 @@ const TIERS = [
   { label: 'M7+', mag: 7.5 },
 ]
 
-const DOT_BOX = 34 // px — contains max radius of ~15
+const DOT_BOX = 34
 
 export function Legend() {
+  const { t } = useTranslation()
   return (
-    <div className="map-legend" aria-label="Шкала магнитуд">
+    <div className="map-legend" aria-label={t('legend_aria')}>
       {TIERS.map(({ label, mag }) => (
         <div key={label} className="legend-item">
           <svg width={DOT_BOX} height={DOT_BOX} aria-hidden="true" style={{ flexShrink: 0 }}>

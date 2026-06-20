@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useMemo } from 'react'
 import { geoPath, geoGraticule10, geoDistance } from 'd3-geo'
 import { makeProjection, makeGlobeProjection } from '../lib/geo.js'
 import { magColor, magRadius } from '../lib/magnitude.js'
+import { useTranslation } from '../i18n/context.jsx'
 import { Legend } from './Legend.jsx'
 import land from '../data/land-110m.geo.json'
 
@@ -16,19 +17,18 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   const [hasRotated, setHasRotated] = useState(false)
   const [hintOut, setHintOut] = useState(false)
 
+  const { t } = useTranslation()
+
   // Drag state lives in refs so pointer-move handlers never see stale closures.
-  const dragRef            = useRef(null)   // { x, y, pointerId, el }
+  const dragRef            = useRef(null)
   const rotateAtDragStart  = useRef([0, -20])
   const projRef            = useRef(null)
-  const didDrag            = useRef(false)  // true once pointer moved > threshold
+  const didDrag            = useRef(false)
 
-  // rotateRef tracks the intended rotation value so animation effects don't
-  // need 'rotate' in their deps (which would retrigger on every drag frame).
   const rotateRef       = useRef([0, -20])
-  const rafRef          = useRef(null)       // active requestAnimationFrame id
-  const lastAnimatedFor = useRef(null)       // dedup key: `${selectedId}:${mode}`
+  const rafRef          = useRef(null)
+  const lastAnimatedFor = useRef(null)
 
-  // Wrapper so both state and ref stay in sync; used everywhere instead of setRotate.
   function applyRotate(r) {
     rotateRef.current = r
     setRotate(r)
@@ -53,8 +53,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   }, [hasRotated])
 
   // Auto-rotate globe to face the selected quake.
-  // Deps: selectedId + mode (user action) + quakes (URL-loaded id may arrive after first fetch).
-  // lastAnimatedFor guards against re-running on poll refreshes when nothing changed.
   useEffect(() => {
     if (mode !== 'globe' || !selectedId) {
       lastAnimatedFor.current = null
@@ -65,7 +63,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     if (lastAnimatedFor.current === key) return
 
     const q = quakes.find(q => q.id === selectedId)
-    if (!q) return  // quake not in feed yet; effect re-runs when quakes updates
+    if (!q) return
 
     lastAnimatedFor.current = key
 
@@ -85,15 +83,13 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
 
     function tick(now) {
       const raw = Math.min(1, (now - startTime) / DURATION)
-      // ease-in-out quadratic
-      const t = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2
+      const tEase = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2
 
-      // Shortest longitude arc (avoid wrapping the long way round the globe)
       let dLon = toLon - fromLon
       if (dLon >  180) dLon -= 360
       if (dLon < -180) dLon += 360
 
-      applyRotate([fromLon + dLon * t, fromLat + (toLat - fromLat) * t])
+      applyRotate([fromLon + dLon * tEase, fromLat + (toLat - fromLat) * tEase])
 
       rafRef.current = raw < 1 ? requestAnimationFrame(tick) : null
     }
@@ -102,7 +98,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     return () => { if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null } }
   }, [selectedId, mode, quakes]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Recompute projection + all paths whenever size, mode, or rotation changes.
   const { sphereD, graticuleD, landD, projection } = useMemo(() => {
     const { width, height } = size
     if (!width || !height) return {}
@@ -119,22 +114,18 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     }
   }, [size, mode, rotate])
 
-  // Ascending mag so larger quakes render on top.
   const sortedQuakes = useMemo(
     () => [...quakes].sort((a, b) => (a.mag ?? 0) - (b.mag ?? 0)),
     [quakes]
   )
 
   const now = Date.now()
-
-  // Geographic point facing the viewer = inverse of the projection rotation.
   const globeCenter = [-rotate[0], -rotate[1]]
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
 
   function onPointerDown(e) {
     if (mode !== 'globe') return
-    // Cancel any auto-rotation so drag takes over immediately.
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
     didDrag.current = false
     dragRef.current = { x: e.clientX, y: e.clientY, pointerId: e.pointerId, el: e.currentTarget }
@@ -146,7 +137,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
     if (mode !== 'globe' || !dragRef.current) return
     const dx = e.clientX - dragRef.current.x
     const dy = e.clientY - dragRef.current.y
-    // Lazily capture the pointer once we're sure it's a drag, not a tap.
     if (!didDrag.current) {
       if (Math.hypot(dx, dy) < 4) return
       didDrag.current = true
@@ -163,8 +153,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
   function onPointerUp() {
     dragRef.current = null
     setDragging(false)
-    // didDrag.current intentionally stays true until next pointerdown so that
-    // the click event fired after this pointerup is ignored by marker handlers.
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -182,7 +170,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
           height={size.height}
           style={{ display: 'block' }}
           role="region"
-          aria-label="Карта землетрясений"
+          aria-label="Tremor"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -190,7 +178,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
         >
           {isGlobe && (
             <defs>
-              {/* Subtle radial gradient gives the sphere a lit-sphere feel */}
               <radialGradient id="globe-sphere-grad" cx="38%" cy="35%" r="65%">
                 <stop offset="0%"   stopColor="var(--land)" />
                 <stop offset="100%" stopColor="var(--bg)"   />
@@ -198,7 +185,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
             </defs>
           )}
 
-          {/* Sphere / ocean background */}
           <path
             d={sphereD}
             aria-hidden="true"
@@ -211,14 +197,13 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
 
           <g className="quake-layer">
             {sortedQuakes.map(q => {
-              // Back-face culling: skip quakes beyond the visible hemisphere.
               if (isGlobe && geoDistance([q.lon, q.lat], globeCenter) >= HALF_PI) return null
 
               const pos = projection([q.lon, q.lat])
               if (!pos) return null
               const [x, y] = pos
-              const r        = magRadius(q.mag)
-              const color    = magColor(q.mag)
+              const r          = magRadius(q.mag)
+              const color      = magColor(q.mag)
               const isSelected = q.id === selectedId
               const isFresh    = (now - q.time) < ONE_HOUR
 
@@ -228,7 +213,6 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
                   transform={`translate(${x},${y})`}
                   className={`quake-marker${isSelected ? ' quake-selected' : ''}${isFresh ? ' quake-fresh' : ''}`}
                   onClick={() => {
-                    // Suppress the click that immediately follows a drag release.
                     if (didDrag.current) { didDrag.current = false; return }
                     onSelect?.(q.id)
                   }}
@@ -267,7 +251,7 @@ export function WorldMap({ quakes = [], selectedId = null, onSelect, mode = 'fla
           aria-hidden="true"
         >
           <span className="globe-hint-glyph">↻</span>
-          <span>Покрутите глобус</span>
+          <span>{t('globe_hint')}</span>
         </div>
       )}
       <Legend />

@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from '../i18n/context.jsx'
 
 export function ShareButton() {
   const [status, setStatus] = useState('idle') // 'idle' | 'ok' | 'fail'
   const timerRef = useRef(null)
+  const { t } = useTranslation()
 
   function handleClick() {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -21,9 +23,9 @@ export function ShareButton() {
   }
 
   const label =
-    status === 'ok'   ? 'Ссылка скопирована' :
-    status === 'fail' ? 'Скопируйте из адресной строки' :
-                        'Поделиться'
+    status === 'ok'   ? t('share.ok')   :
+    status === 'fail' ? t('share.fail') :
+                        t('share.idle')
 
   return (
     <button
